@@ -19,11 +19,11 @@ sed -e 's/repeated mesos.v1.Request/repeated Request/' ${SCHEDULER} > ${SCHEDULE
 sed -e 's/optional Request/optional Req/' ${SCHEDULER} > ${SCHEDULER}.tmp && mv ${SCHEDULER}.tmp ${SCHEDULER}
 
 # Compile scheduler.proto
-erl +B -noinput -pa ${PARENT}/deps/gpb/ebin\
+erl +B -noinput -pa ${PARENT}/../gpb/ebin\
     -I${PARENT}/proto -o-erl src -o-hrl include -modsuffix _protobuf -il\
     -s gpb_compile c ${SCHEDULER}
 
 # Compile executor.proto
-erl +B -noinput -pa ${PARENT}/deps/gpb/ebin\
+erl +B -noinput -pa ${PARENT}/../gpb/ebin\
     -I${PARENT}/proto -o-erl src -o-hrl include -modsuffix _protobuf -il\
     -s gpb_compile c ${EXECUTOR}
