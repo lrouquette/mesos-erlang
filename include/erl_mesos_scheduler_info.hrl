@@ -3,6 +3,7 @@
                          data_format_module :: module(),
                          api_version :: erl_mesos_scheduler_call:version(),
                          master_host :: binary(),
+                         master_protocol :: http | https,
                          request_options :: erl_mesos_http:options(),
                          subscribed :: boolean(),
                          framework_id :: erl_mesos:'FrameworkID'(),

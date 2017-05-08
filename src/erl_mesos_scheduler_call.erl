@@ -189,8 +189,9 @@ async_request(#scheduler_info{data_format = DataFormat,
                               data_format_module = DataFormatModule,
                               api_version = ApiVersion,
                               master_host = MasterHost,
+                              master_protocol = MasterProtocol,
                               request_options = RequestOptions}, Call) ->
-    ReqUrl = request_url(ApiVersion, MasterHost),
+    ReqUrl = request_url(ApiVersion, MasterProtocol, MasterHost),
     erl_mesos_http:async_request(ReqUrl, DataFormat, DataFormatModule, [], Call,
                                  RequestOptions).
 
@@ -205,9 +206,10 @@ sync_request(#scheduler_info{data_format = DataFormat,
                              data_format_module = DataFormatModule,
                              api_version = ApiVersion,
                              master_host = MasterHost,
+                             master_protocol = MasterProtocol,
                              request_options = RequestOptions,
                              stream_id = StreamId}, Call) ->
-    ReqUrl = request_url(ApiVersion, MasterHost),
+    ReqUrl = request_url(ApiVersion, MasterProtocol, MasterHost),
     ReqHeaders = sync_request_headers(StreamId),
     Response = erl_mesos_http:sync_request(ReqUrl, DataFormat, DataFormatModule,
                                            ReqHeaders, Call, RequestOptions),
@@ -215,9 +217,10 @@ sync_request(#scheduler_info{data_format = DataFormat,
 
 %% @doc Returns request url.
 %% @private
--spec request_url(version(), binary()) -> binary().
-request_url(v1, MasterHost) ->
-    <<"http://", MasterHost/binary, ?V1_API_PATH>>.
+-spec request_url(version(), http | https, binary()) -> binary().
+request_url(v1, MasterProtocol, MasterHost) ->
+    ProtocolBin = atom_to_binary(MasterProtocol, latin1),
+    <<ProtocolBin/binary, "://", MasterHost/binary, ?V1_API_PATH>>.
 
 %% @doc Sync request headers.
 %% @private

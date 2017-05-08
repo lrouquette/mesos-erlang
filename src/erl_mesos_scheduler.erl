@@ -62,6 +62,7 @@
                 data_format_module :: module(),
                 api_version :: erl_mesos_scheduler_call:version(),
                 master_hosts :: [binary()],
+                master_protocol :: http | https,
                 request_options :: erl_mesos_http:options(),
                 heartbeat_timeout_window :: pos_integer(),
                 max_num_resubscribe :: non_neg_integer(),
@@ -214,6 +215,8 @@
 -callback terminate(term(), term()) -> term().
 
 -define(DEFAULT_MASTER_HOSTS, [<<"localhost:5050">>]).
+
+-define(DEFAULT_MASTER_PROTOCOL, http).
 
 -define(DEFAULT_REQUEST_OPTIONS, []).
 
@@ -501,6 +504,7 @@ format_status(terminate, [_Dict, State]) ->
     {ok, state()} | {error, term()}.
 init(Name, Scheduler, SchedulerOptions, Options) ->
     Funs = [fun master_hosts/1,
+            fun master_protocol/1,
             fun request_options/1,
             fun heartbeat_timeout_window/1,
             fun max_num_resubscribe/1,
@@ -549,6 +553,20 @@ master_hosts([MasterHost | _MasterHosts], _ValidMasterHosts) ->
     {error, MasterHost};
 master_hosts([], ValidMasterHosts) ->
     {ok, lists:reverse(ValidMasterHosts)}.
+
+%% @doc Validates and returns master protocol.
+%% @private
+-spec master_protocol(options()) ->
+    {ok, {master_protocol, http | https}}.
+master_protocol(Options) ->
+    case proplists:get_value(master_protocol, Options,
+                             ?DEFAULT_MASTER_PROTOCOL) of
+        Protocol when is_atom(Protocol) andalso
+               (Protocol =:= http orelse Protocol =:= https) ->
+            {ok, {master_protocol, Protocol}};
+        Protocol ->
+            {error, {bad_master_protocol, Protocol}}
+    end.
 
 %% @doc Returns request options.
 %% @private
@@ -641,6 +659,7 @@ options([], _Options, ValidOptions) ->
 -spec state(atom(), module(), options()) -> state().
 state(Name, Scheduler, Options) ->
     MasterHosts = proplists:get_value(master_hosts, Options),
+    MasterProtocol = proplists:get_value(master_protocol, Options),
     RequestOptions = proplists:get_value(request_options, Options),
     HeartbeatTimeoutWindow = proplists:get_value(heartbeat_timeout_window,
                                                  Options),
@@ -652,6 +671,7 @@ state(Name, Scheduler, Options) ->
            data_format_module = ?DATA_FORMAT_MODULE,
            api_version = ?API_VERSION,
            master_hosts = MasterHosts,
+           master_protocol = MasterProtocol,
            request_options = RequestOptions,
            heartbeat_timeout_window = HeartbeatTimeoutWindow,
            max_num_resubscribe = MaxNumResubscribe,
@@ -723,6 +743,7 @@ scheduler_info(#state{name = Name,
                       data_format_module = DataFormatModule,
                       api_version = ApiVersion,
                       master_host = MasterHost,
+                      master_protocol = MasterProtocol,
                       request_options = RequestOptions,
                       call_subscribe =
                       #'Call.Subscribe'{framework_info =
@@ -735,6 +756,7 @@ scheduler_info(#state{name = Name,
                     data_format_module = DataFormatModule,
                     api_version = ApiVersion,
                     master_host = MasterHost,
+                    master_protocol = MasterProtocol,
                     request_options = RequestOptions,
                     subscribed = Subscribed,
                     framework_id = Id,
@@ -1204,6 +1226,7 @@ format_state(#state{name = Name,
                     data_format_module = DataFormatModule,
                     api_version = ApiVersion,
                     master_hosts = MasterHosts,
+                    master_protocol = MasterProtocol,
                     request_options = RequestOptions,
                     heartbeat_timeout_window = HeartbeatTimeoutWindow,
                     max_num_resubscribe = MaxNumResubscribe,
@@ -1226,6 +1249,7 @@ format_state(#state{name = Name,
              {data_format_module, DataFormatModule},
              {api_version, ApiVersion},
              {master_hosts, MasterHosts},
+             {master_protocol, MasterProtocol},
              {request_options, RequestOptions},
              {heartbeat_timeout_window, HeartbeatTimeoutWindow},
              {max_num_resubscribe, MaxNumResubscribe},
